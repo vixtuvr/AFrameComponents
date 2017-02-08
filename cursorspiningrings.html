@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <title>Android - IPhone Dev</title>
+    <script type="text/javascript" src="https://aframe.io/releases/0.4.0/aframe.min.js"></script>
+    <!-- CSS -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Raleway:400,300,100,600">
+    <link rel="stylesheet" href="../../normalize.css">
+    <link rel="stylesheet" href="../../skeleton.css">
+</head>
+
+<body>
+
+<script type="text/javascript">
+
+    AFRAME.registerComponent('myawesomeline',{
+        schema:
+        {
+            color:{type: 'color', default: '#da711d'}
+        },
+
+        init: function(data)
+        {
+            var data = this.data;
+            var el = this.el;
+
+            this.geometry = new THREE.Geometry();
+            this.geometry.vertices.push(
+                    new THREE.Vector3(-10.0, 10.0, 0.0),//it is the 0 position in THREE.Face3
+                    new THREE.Vector3(-10.0, -10.0, 0.0),//it is the 1 position in THREE.Face3
+                    new THREE.Vector3(10.0, -10.0, 0.0),//it is the 2 position in THREE.Face3
+                    new THREE.Vector3(10.0, 10.0, 0.0),//it is the 3 position in THREE.Face3
+                    new THREE.Vector3(-10.0, 10.0, 0.0)//it is the 4 position in THREE.Face3
+            );
+
+            this.geometry.faces.push(new THREE.Face3(0, 1, 2, 3, 4));
+
+            this.geometry.computeBoundingSphere();
+
+            this.material = new THREE.LineBasicMaterial({color: data.color});
+            this.line = new THREE.Line(this.geometry, this.material);
+            el.setObject3D('line', this.line);
+            el.getObject3D('line').castShadow = data.shadow;
+
+        }
+    });
+
+
+
+    AFRAME.registerComponent('myawesomering',{
+        schema:
+        {
+            innerRadius:{type: 'number', default: 0},//Ring inner radius, default is zero, it does not work well to set it to zero
+            outerRadius:{type: 'number', default: 50},
+            thetaSegments:{type: 'number', min: 3, default: 8},//Number of segments (tris) in the ring
+            phiSegments:{type: 'number', min:3, default: 8},
+            thetaStart:{type: 'number', default: 0},//Start angle for first segment, three o'clock position is the default start
+            thetaLength:{type: 'number', default: Math.PI * 2},//The central angle, 2*Pi makes a complete ring
+            color:{type: 'color', default: 'da711d'},
+            transparent:{type:'boolean', default: false},
+            opacity:{type: 'number', default: 1.0},
+            shadow:{type: 'boolean', default: false}
+        },
+
+        init: function(data)
+        {
+            var data = this.data;
+            var el = this.el;
+
+            this.geometry= new THREE.RingGeometry(data.innerRadius, data.outerRadius, data.thetaSegments, data.phiSegments, data.thetaStart / 360 * 2 * Math.PI, data.thetaLength / 360 * 2 * Math.PI);
+            this.material = new THREE.MeshPhongMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity });
+            this.mesh = new THREE.Mesh(this.geometry, this.material);
+            el.setObject3D('mesh', this.mesh);
+            el.getObject3D('mesh').castShadow = data.shadow;
+        }
+    });
+
+    AFRAME.registerComponent('spotlightm',{
+        //Properties
+        schema:
+        {
+            color:{type: 'color', default:'#FFFFFF'},
+            shadow:{type: 'boolean', default: true},
+            shadowcameranear:{type: 'number', default: 20.0},
+            shadowcamerafar:{type: 'number', default: 50.0}
+        },
+
+        init: function(data)
+        {
+            var data = this.data;
+            var el = this.el;
+
+            this.spotlight = new THREE.SpotLight(data.colorm);
+            el.setObject3D('spotlight', this.spotlight);
+            el.getObject3D('spotlight').castShadow = data.shadow;
+            el.getObject3D('spotlight').shadow.camera.near = data.shadowcameranear;
+            el.getObject3D('spotlight').shadow.camera.far = data.shadowcamerafar;
+            el.sceneEl.systems.light.registerLight(el);
+        }
+    });
+
+    AFRAME.registerComponent('myawesomesphere',{
+        schema:
+        {
+            radius:{type:'number', default: 50},
+            widthSegments:{type:'int', min: 3, default: 32},
+            heightSegments:{type:'int', min: 2, default: 32},
+            phiStart:{type:'number', default: 0},
+            phiLength:{type:'number', default: 2 * Math.PI},
+            thetaStart:{type:'number', default: 0},
+            thetaLength:{type:'number', default: Math.PI},
+            color:{type: 'color', default: '#AAA'},
+            transparent:{type:'boolean', default: false},
+            opacity:{type: 'number', default: 1.0}
+        },
+
+        init: function(data)
+        {
+            var data = this.data;
+            var el = this.el;
+
+            this.geometry = new THREE.SphereGeometry(data.radius, data.widthSegments, data.heightSegments, data.phiStart, data.phiLength, data.thetaStart, data.thetaLength);
+            this.material = new THREE.MeshPhongMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity});
+            this.mesh = new THREE.Mesh(this.geometry, this.material);
+            el.setObject3D('mesh', this.mesh);
+        },
+    });
+
+    var originalRotation = new THREE.Vector3();
+    var counter = 0;
+    AFRAME.registerComponent('rotate',{
+        dependencies:['rotation'],
+        schema:{type: 'vec3'},
+
+        init: function()
+        {
+            var data = this.data;
+            var el = this.el;
+            originalRotation.copy(el.object3D.rotation);
+            console.log(originalRotation);
+        },
+
+        tick: function(time, timeDelta)
+        {
+            counter++;
+            this.el.object3D.rotation.set(0.0, 0.0, timeDelta/1000*counter);
+            //console.log(this.el.object3D.rotation);
+        }
+    });
+
+
+</script>
+
+<a-scene class="fullscreen" canvas="" debug="true" stats="true"
+         inspector="url: https://aframe.io/releases/0.3.0/aframe-inspector.min.js"
+         keyboard-shortcuts="" screenshot="" vr-mode-ui="">
+
+
+
+    <!--
+    ******************************************************************************************************************************************************************************************
+            CAMERA
+    /*****************************************************************************************************************************************************************************************
+    -->
+    <a-camera active="true" visible="true" position="0.0 0.0 10.0" rotation ="0.0 0.0 0.0" id="mycam">
+        <a-cursor active visible="true" id="cursor1" event-set__1="_event:mouseenter; color: springgreen"
+                  event-set__2="_event: mouseleave; color: orange" material="" cursor=""
+                  geometry="" position="" rotation="" scale color="orange">
+            <a-entity id="parent" position="0.0 0.0 0.0" rotate="" scale="0.01 0.01 0.01" rotation="0.0 0.0 0.0">
+
+                <!--a-entity id="line" rotation="0.0 0.0 0.0" myawesomeline="transparent: true"></a-entity-->
+
+                <a-entity id="ring" rotation="0.0 0.0 0.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: true; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 20.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 40.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 60.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 80.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 100.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 120.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 140.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32;thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 160.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 180.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 200.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 220.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 240.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 260.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 280.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 300.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 320.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+                </a-entity>
+                <a-entity id="ring" rotation="0.0 0.0 340.0"myawesomering="innerRadius: 9; outerRadius: 10; thetaSegments: 32; phiSegments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+                </a-entity>
+
+
+
+                <!--a-animation attribute="scale" dur="10000" from="0.1 0.1 0.1" to="0.05 0.05 0.05" direction="alternate" repeat="indefinite"></a-animation-->
+            </a-entity>
+
+        </a-cursor>
+    </a-camera>
+    <!--
+    ******************************************************************************************************************************************************************************************
+            END CAMERA
+    /*****************************************************************************************************************************************************************************************
+    -->
+
+
+
+
+    <a-entity id="myspotlight"
+              visible="false"
+              spotlightm ="color: #ffffff; shadow: true; shadowcameranear: 20.0; shadowcamerafar: 50.0"
+              position="10.0 20.0 20.0">
+
+    </a-entity>
+
+
+</a-scene>
+
+
+<div id="footer">
+    <div id="footerContent">
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    aframeScene = document.querySelector("a-scene");//reference to the AFrame scene
+    var threeScene;
+    var aframeCamera;
+    var aframeRenderer;
+    var rotationalReference;
+
+    if (aframeScene.hasLoaded)
+    {
+        console.log("LOADED");
+    }
+    else
+    {
+        aframeScene.addEventListener('loaded', initScene);
+    }
+
+    function initScene()
+    {
+        findDefaultAframeLights();
+        getReferences();
+        setShadows();
+    }
+    //Function to set visible property to false of the default injected AFrame lights
+    //In the docs states that when we add a light the default AFrame light will be deleted??????
+    function findDefaultAframeLights()
+    {
+        var lights = aframeScene.getElementsByTagName('a-entity');
+
+        for(var i = 0; i< lights.length; i++)
+        {
+            if(lights[i].id == '')
+            {
+                lights[i].setAttribute("visible", false);
+            }
+        }
+    }
+
+    function getReferences()
+    {
+        threeScene = document.querySelector('a-scene').object3D;//reference to the underlying THREE scene
+        aframeCamera = document.getElementById("mycam");
+        threeCamera = aframeCamera.object3D;//This is useless!!!!!!
+        threeCamera.lookAt(threeScene.position);
+        aframeRenderer = aframeScene.renderer;
+        aframeRenderer.sortObjects = true;//to avoid problems with transparent images
+        aframeSpotLight = document.getElementById("myspotlight");
+        threeSpotLight = aframeSpotLight.object3D;
+        rotationalReference = document.getElementById('parent');
+        //console.log(rotationalReference);
+    }
+
+    function setShadows()
+    {
+        aframeRenderer.shadowMap.enabled = true;
+        aframeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        aframeRenderer.setClearColor(0x000000, 1.0);
+        aframeRenderer.setSize(window.innerWidth, window.innerHeight);
+        aframeRenderer.shadowMap.enabled = true;
+        threeSpotLight.shadowCameraNear = 0.01;
+        threeSpotLight.castShadow = true;
+        threeSpotLight.visible = true;
+    }
+
+</script>
+
+</body>
+</html>

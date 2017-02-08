@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <title>Android - IPhone Dev</title>
+
+    <script type="text/javascript" src="https://aframe.io/releases/0.4.0/aframe.min.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Raleway:400,300,100,600">
+    <link rel="stylesheet" href="../../normalize.css">
+    <link rel="stylesheet" href="../../skeleton.css">
+
+
+</head>
+
+<body>
+
+<script type="text/javascript">
+
+AFRAME.registerComponent('myawesomebox', {
+
+    //Properties
+    schema:
+    {
+        width:{type: 'number', default: 1.0},
+        height:{type: 'number', default: 1.0},
+        depth:{type: 'number', default: 1.0},
+        widthSegments:{type: 'int', min: 1, max: 20, default: 1},
+        heightSegments:{type: 'int',min: 1, max: 20, default: 1},
+        depthSegments:{type: 'int', min: 1, max: 20, default: 1},
+        color:{type: 'color', default: '#AAA'},
+        transparent:{type:'boolean', default: false},
+        opacity:{type: 'number', default: 1.0},
+        shadow:{type: 'boolean', default: false}
+    },
+    //End properties
+
+    //Initial creation and setting of the mesh
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        //Create the box geometry using THREE
+        this.geometry = new THREE.BoxGeometry(data.width, data.height, data.depth, data.widthSegments, data.heightSegments, data.depthSegments);
+        //Create the material
+        this.material = new THREE.MeshLambertMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity});
+        //Create mesh
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        //Set Mesh on entity
+        el.setObject3D('mesh', this.mesh);
+        //Set castShadow parameter
+        el.getObject3D('mesh').castShadow = data.shadow;
+    },
+
+    //Update the mesh in response to property updates
+    update: function(oldData)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        //if 'oldData' is empty, then that means we are in the initialization process
+        //and so, we do not need to update
+        if(Object.keys(oldData).length === 0)
+        {
+            return;
+        }
+
+        //Geometry related properties changed. Need to update the geometry
+        if(data.width !== oldData.width ||
+                data.height!== oldData.height ||
+                data.depth!== oldData.depth)
+        {
+            el.getObject3D('mesh').geometry = new THREE.BoxGeometry(data.width, data.height, data.depth, data.widthSegments, data.heightSegments, data.depthSegments);
+        }
+
+        //Material related properties changed. Update the material
+        if(data.color !== oldData.color)
+        {
+            el.getObject3D('mesh').material.color = data.color;
+        }
+    },
+
+    //Handle when the component or entity is removed
+    remove: function()
+    {
+        this.el.removeObject3D('mesh');
+    }
+});
+
+AFRAME.registerComponent('myawesomeline',{
+    schema:
+    {
+        color:{type: 'color', default: '#da711d'},
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        this.geometry = new THREE.Geometry();
+        this.geometry.vertices.push(
+            new THREE.Vector3(-10.0, 10.0, 0.0),//it is the 0 position in THREE.Face3
+            new THREE.Vector3(-10.0, -10.0, 0.0),//it is the 1 position in THREE.Face3
+            new THREE.Vector3(10.0, -10.0, 0.0),//it is the 2 position in THREE.Face3
+            new THREE.Vector3(10.0, 10.0, 0.0),//it is the 3 position in THREE.Face3
+            new THREE.Vector3(-10.0, 10.0, 0.0)//it is the 4 position in THREE.Face3
+        );
+
+        this.geometry.faces.push(new THREE.Face3(0, 1, 2, 3, 4));
+
+        this.geometry.computeBoundingSphere();
+
+        this.material = new THREE.LineBasicMaterial({color: data.color});
+        this.line = new THREE.Line(this.geometry, this.material);
+        el.setObject3D('line', this.line);
+        el.getObject3D('line').castShadow = data.shadow;
+
+    }
+});
+
+AFRAME.registerComponent('myawesomecircle',{
+    schema:
+    {
+        radius:{type: 'number', default: 50},//Circle radius
+        segments:{type: 'number', min: 3, default: 8},//Number of segments (tris) in the circle
+        thetaStart:{type: 'number', default: 0},//Start angle for first segment, three o'clock position is the default start
+        thetaLength:{type: 'number', default: Math.PI * 2},//The central angle, 2*Pi makes a complete circle
+        color:{type: 'color', default: 'da711d'},
+        transparent:{type:'boolean', default: false},
+        opacity:{type: 'number', default: 1.0},
+        shadow:{type: 'boolean', default: false}
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        this.geometry= new THREE.CircleGeometry(data.radius, data.segments, data.thetaStart / 360 * 2 * Math.PI, data.thetaLength / 360 * 2 * Math.PI);
+        this.material = new THREE.MeshPhongMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity });
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        el.setObject3D('mesh', this.mesh);
+        el.getObject3D('mesh').castShadow = data.shadow;
+    }
+});
+
+
+
+
+AFRAME.registerComponent('myawesomesphere',{
+    schema:
+    {
+        radius:{type:'number', default: 50},
+        widthSegments:{type:'int', min: 3, default: 32},
+        heightSegments:{type:'int', min: 2, default: 32},
+        phiStart:{type:'number', default: 0},
+        phiLength:{type:'number', default: 2 * Math.PI},
+        thetaStart:{type:'number', default: 0},
+        thetaLength:{type:'number', default: Math.PI},
+        color:{type: 'color', default: '#AAA'},
+        transparent:{type:'boolean', default: false},
+        opacity:{type: 'number', default: 1.0}
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        this.geometry = new THREE.SphereGeometry(data.radius, data.widthSegments, data.heightSegments, data.phiStart, data.phiLength, data.thetaStart, data.thetaLength);
+        this.material = new THREE.MeshPhongMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity});
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        el.setObject3D('mesh', this.mesh);
+    },
+});
+
+AFRAME.registerGeometry('example',{
+    schema:
+    {
+        vertices:{default: ['-10 10 0', '-10 -10 0', '10 -10 0']}
+    },
+
+    init: function(data)
+    {
+        var geometry = new THREE.Geometry();
+        geometry.vertices.push.call(
+                geometry.vertices, data.vertices.map(function(vertex)
+                {
+                    var points = vertex.split(' ').map(function(num){return parseInt(num);});
+                    console.log(points);
+                    return new THREE.Vector3(points[0], points[1], points[2]);
+                })
+        );
+        geometry.faces.push(new THREE.Face3(0, 1, 2));
+        this.geometry = geometry;
+    }
+
+});
+
+AFRAME.registerComponent('followme', {
+    schema:
+    {
+        target:{type: 'selector'},
+        speed:{type: 'number'}
+    },
+
+    init: function(data)
+    {
+        this.directionVec3 = new THREE.Vector3();
+
+    },
+
+    tick: function(time, timeDelta)
+    {
+        var directionVec3 = this.directionVec3;
+        var targetPosition = this.data.target.object3D.position;
+        var currentPosition = this.el.object3D.position;
+        directionVec3.copy(targetPosition).sub(currentPosition);
+        var distance = directionVec3.length();
+        if(distance < 0.1)
+        {
+            return;
+        }
+        var factor = this.data.speed / distance;
+        ['x', 'y', 'z'].forEach(function(axis){
+            directionVec3[axis] *= factor * (timeDelta/1000);
+        });
+
+        this.el.setAttribute('position', {
+            x: currentPosition.x + directionVec3.x,
+            y: currentPosition.y + directionVec3.y,
+            z: currentPosition.z + directionVec3.z
+        });
+    }
+});
+
+AFRAME.registerComponent('cubem',{
+
+    //Properties
+    schema:
+    {
+        width:{type: 'number', default: 1.0},
+        height:{type: 'number', default: 1.0},
+        depth:{type: 'number', default: 1.0},
+        color:{type: 'color', default: '#AAA'},
+        shadow:{type: 'boolean', default: false}
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        //Create the box geometry using THREE
+        this.geometry = new THREE.BoxGeometry(data.width, data.height, data.depth);
+        //Create the material
+        this.material = new THREE.MeshLambertMaterial({color: data.color});
+        //Create mesh
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        //Set Mesh on entity
+        el.setObject3D('mesh', this.mesh);
+        el.setObject3D('mesh').castShadow = data.shadow;
+
+    }
+});
+
+AFRAME.registerComponent('planem',{
+    //Properties
+    schema:
+    {
+        width: {type: 'number', default: 1.0},
+        height: {type: 'number', default: 1.0},
+        color: {type: 'color', default:'#cccccc'},
+        transparent:{type:'boolean', default: false},
+        opacity:{type: 'number', default: 1.0},
+        shadow: {type: 'boolean', default: false}
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        this.geometry = new THREE.PlaneGeometry(data.width, data.height);
+        this.material = new THREE.MeshLambertMaterial({color: data.color, transparent: data.transparent, opacity: data.opacity});
+        this.mesh = new THREE.Mesh(this.geometry, this.material);
+        el.setObject3D('mesh', this.mesh);
+        el.getObject3D('mesh').receiveShadow = data.shadow;
+    }
+});
+
+AFRAME.registerComponent('spotlightm',{
+    //Properties
+    schema:
+    {
+        color:{type: 'color', default:'#FFFFFF'},
+        shadow:{type: 'boolean', default: true},
+        shadowcameranear:{type: 'number', default: 20.0},
+        shadowcamerafar:{type: 'number', default: 50.0}
+    },
+
+    init: function(data)
+    {
+        var data = this.data;
+        var el = this.el;
+
+        this.spotlight = new THREE.SpotLight(data.colorm);
+        el.setObject3D('spotlight', this.spotlight);
+        el.getObject3D('spotlight').castShadow = data.shadow;
+        el.getObject3D('spotlight').shadow.camera.near = data.shadowcameranear;
+        el.getObject3D('spotlight').shadow.camera.far = data.shadowcamerafar;
+        el.sceneEl.systems.light.registerLight(el);
+    }
+});
+</script>
+
+<a-scene class="fullscreen" canvas="" debug="true" stats="true"
+         inspector="url: https://aframe.io/releases/0.3.0/aframe-inspector.min.js"
+         keyboard-shortcuts="" screenshot="" vr-mode-ui="">
+
+    <!--
+******************************************************************************************************************************************************************************************
+        ASSETS
+/*****************************************************************************************************************************************************************************************
+-->
+    <a-assets>
+
+
+    </a-assets>
+    <!--
+    ******************************************************************************************************************************************************************************************
+        END ASSETS
+    /*****************************************************************************************************************************************************************************************
+    -->
+
+
+    <!--
+    ******************************************************************************************************************************************************************************************
+            CAMERA
+    /*****************************************************************************************************************************************************************************************
+    -->
+    <a-camera active="true" visible="true" position="15.0 16.0 13.0" rotation ="-30.0 45.0 0.0" id="mycam">
+        <a-cursor active visible id="cursor1" event-set__1="_event:mouseenter; color: springgreen"
+                  event-set__2="_event: mouseleave; color: orange" material="" cursor=""
+                  geometry="" position="" rotation="" scale color="orange">
+
+        </a-cursor>
+    </a-camera>
+    <!--
+    ******************************************************************************************************************************************************************************************
+            END CAMERA
+    /*****************************************************************************************************************************************************************************************
+    -->
+
+    <!--
+    ******************************************************************************************************************************************************************************************
+            including a registered component myawesomebox created with THREE
+    /*****************************************************************************************************************************************************************************************
+    -->
+
+    <a-entity
+            id="mymesh"
+            myawesomebox="width: 6.0; height: 4.0; depth: 6.0; color: red; shadow:true; transparent: true; opacity: 0.6"
+            position="0.0 0.0 0.0">
+        <a-entity id="mysphereone" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="myspheretwo" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="myspherethree" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="myspherefour" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="myspherefive" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="myspheresix" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="mysphereseven" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="mysphereeight" class="vert" myawesomesphere="radius: .15; color: #00ff00; transparent: false; opacity:0.55" position="0.0 0.0 0.0"></a-entity>
+        <a-entity id="line" myawesomeline=""></a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 0.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: true; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 0.0" to="0.0 0.0 360.0" easing="ease" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 20.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 20.0" to="0.0 0.0 380.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 40.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 40.0" to="0.0 0.0 400.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 60.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 60.0" to="0.0 0.0 420.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 80.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 80.0" to="0.0 0.0 440.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 100.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 100.0" to="0.0 0.0 460.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 120.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 120.0" to="0.0 0.0 480.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 140.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 140.0" to="0.0 0.0 500.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 160.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 160.0" to="0.0 0.0 520.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 180.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 180.0" to="0.0 0.0 540.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 200.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 200.0" to="0.0 0.0 560.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 220.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 220.0" to="0.0 0.0 580.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 240.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 240.0" to="0.0 0.0 600.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 260.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 260.0" to="0.0 0.0 620.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 280.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 280.0" to="0.0 0.0 640.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 300.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 300.0" to="0.0 0.0 660.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 320.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: orange; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 320.0" to="0.0 0.0 680.0" repeat="indefinite"></a-animation>
+        </a-entity>
+        <a-entity id="circle" rotation="0.0 0.0 340.0"myawesomecircle="radius: 10; segments: 32; thetaStart: 0; thetaLength: 10;color: red; transparent: false; opacity: 1.0">
+            <a-animation attribute="rotation" dur="5000" from="0.0 0.0 340.0" to="0.0 0.0 700.0" repeat="indefinite"></a-animation>
+        </a-entity>
+
+
+        <a-animation attribute="position" dur="10000" from="0.0 0.0 0.0" to="0.0 10.0 0.0" direction="alternate" repeat="indefinite"></a-animation>
+        <a-animation attribute="rotation" dur="10000" from="0.0 0.0 0.0" to="0.0 40.0 0.0" direction="alternate" repeat="indefinite"></a-animation>
+    </a-entity>
+    <a-entity id="followme" followme="target: #mymesh; speed:2.0">
+
+        <a-sphere position="0.0 0.0 0.0" scale="0.15 0.15 0.15" color="orange"></a-sphere>
+    </a-entity>
+
+
+    <!--a-entity id="myplane"
+              planem="width: 20.0; height: 20.0; color: #4c4c4c; shadow: true; transparent: true; opacity: 0.65"
+              position="0.0 -1000.0 0.0"
+              rotation=" -90.0 0.0 0.0 ">
+
+    </a-entity-->
+
+    <a-entity id="myspotlight"
+              visible="false"
+              spotlightm ="color: #ffffff; shadow: true; shadowcameranear: 20.0; shadowcamerafar: 50.0"
+              position="10.0 20.0 20.0"></a-entity>
+
+    <!--The following entity returns a three error-->
+    <!--a-entity id="examplegeom" geometry="primitive: example; vertices: 1 1 1, 2 2 2, 3 3 3"></a-entity-->
+
+
+    <!--
+    ******************************************************************************************************************************************************************************************
+            END including a registered component boxm created with THREE
+    /*****************************************************************************************************************************************************************************************
+    -->
+
+</a-scene>
+
+
+<div id="footer">
+    <div id="footerContent">
+
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    aframeScene = document.querySelector("a-scene");//reference to the AFrame scene
+    var threeScene;
+    var aframeCamera;
+    var aframeRenderer;
+    var aframeCube;
+    var threeCube;
+    var vert;
+
+    if (aframeScene.hasLoaded)
+    {
+        console.log("LOADED");
+    }
+    else
+    {
+        aframeScene.addEventListener('loaded', initScene);
+    }
+
+    function initScene()
+    {
+        findDefaultAframeLights();
+        getReferences();
+        setShadows();
+        addVertices(threeCube);
+        positionSpheres(threeCube, vert);
+    }
+    //Function to set visible property to false of the default injected AFrame lights
+    //In the docs states that when we add a light the default AFrame light will be deleted??????
+    function findDefaultAframeLights()
+    {
+        var lights = aframeScene.getElementsByTagName('a-entity');
+
+        for(var i = 0; i< lights.length; i++)
+        {
+            if(lights[i].id == '')
+            {
+                lights[i].setAttribute("visible", false);
+            }
+        }
+    }
+
+    function getReferences()
+    {
+        threeScene = document.querySelector('a-scene').object3D;//reference to the underlying THREE scene
+        aframeCamera = document.getElementById("mycam");
+        threeCamera = aframeCamera.object3D;
+        threeCamera.lookAt(threeScene.position);
+        //console.log(threeScene.position);
+        aframeRenderer = aframeScene.renderer;
+        aframeCube = document.getElementById("mymesh");
+        //aframePlane = document.getElementById("myplane");
+        aframeSpotLight = document.getElementById("myspotlight");
+        threeCube = aframeCube.object3D;
+        //threePlane = aframePlane.object3D;
+        threeSpotLight = aframeSpotLight.object3D;
+
+        vert = document.getElementsByClassName("vert");
+
+        console.log(vert);
+    }
+
+    function setShadows()
+    {
+        aframeRenderer.shadowMap.enabled = true;
+        aframeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        aframeRenderer.setClearColor(0x000000, 1.0);
+        aframeRenderer.setSize(window.innerWidth, window.innerHeight);
+        aframeRenderer.shadowMap.enabled = true;
+
+        threeSpotLight.shadowCameraNear = 0.01;
+
+        threeSpotLight.castShadow = true;
+        threeCube.castShadow = true;
+        threeCube.receiveShadow = false;
+        //threePlane.castShadow = false;
+        //threePlane.receiveShadow = true;
+
+        threeSpotLight.visible = true;
+    }
+
+    //Function to position our AFrame unregistered spheres in the vertices of our awesome cube
+    //The AFrame unregistered previous spheres do not appear in the AFrame inspector
+    function addVertices(mesh)
+    {
+        var meshm = mesh.el.getObject3D('mesh');
+        var vertices = meshm.geometry.vertices;
+        var vertexMaterial = new THREE.MeshPhongMaterial({color: 0x00ff00});
+        var sphereIndex = 0;
+        vertices.forEach(function(vertex)
+        {
+            var vertexSphere = new THREE.SphereGeometry(0.15);
+            var vertexMesh = new THREE.Mesh(vertexSphere, vertexMaterial);
+            vertexMesh.position.x = vertex.x;
+            vertexMesh.position.y = vertex.y;
+            vertexMesh.position.z = vertex.z;
+            vertexMesh.name = "sphere" + sphereIndex;
+            //console.log(vertexMesh.name);
+            threeScene.add(vertexMesh);
+            sphereIndex++;
+        });
+    }
+    //Function to position our AFrame registered spheres in the vertices of our awesomecube
+    //awesome cube is defined in html as an entity parent of the previous spheres
+    //so the spheres follow the movement of our awesomecube
+    //As the spheres are registered they appear in the AFrame inspector
+    function positionSpheres(mesh, spheres)
+    {
+        var  meshm = mesh.el.getObject3D('mesh');
+        var vertices = meshm.geometry.vertices;
+
+        for(var i = 0; i<vertices.length; i++)
+        {
+            spheres[i].object3D.position.x = vertices[i].x;
+            spheres[i].object3D.position.y = vertices[i].y;
+            spheres[i].object3D.position.z = vertices[i].z;
+        }
+    }
+
+</script>
+
+</body>
+</html>
