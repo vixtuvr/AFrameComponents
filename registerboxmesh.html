@@ -266,6 +266,7 @@
 -->
     <a-assets>
 
+        <img id="anim" src="../../img/360AnimTest/360TestAnim12mSphere.png">
 
     </a-assets>
     <!--
@@ -331,6 +332,11 @@
               visible="false"
               spotlightm ="color: #ffffff; shadow: true; shadowcameranear: 20.0; shadowcamerafar: 50.0"
               position="10.0 20.0 20.0"></a-entity>
+
+
+
+    <!--sky box to test 360 cam rig dist-->
+    <a-sky src="#anim" radius="5000"></a-sky>
 
     <!--The following entity returns a three error-->
     <!--a-entity id="examplegeom" geometry="primitive: example; vertices: 1 1 1, 2 2 2, 3 3 3"></a-entity-->

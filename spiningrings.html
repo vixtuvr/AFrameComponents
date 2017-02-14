@@ -161,6 +161,16 @@
          keyboard-shortcuts="" screenshot="" vr-mode-ui="">
 
 
+    <!--ASSETS-->
+
+    <a-assets>
+
+        <img id="anim" src="../../img/360AnimTest/360TestAnim.png">
+
+    </a-assets>
+
+
+
 
     <!--
     ******************************************************************************************************************************************************************************************
@@ -226,6 +236,10 @@
 
         <!--a-animation attribute="scale" dur="10000" from="0.1 0.1 0.1" to="0.05 0.05 0.05" direction="alternate" repeat="indefinite"></a-animation-->
     </a-entity>
+
+    <a-sky id="sky" opacity= "0" color="black" radius = "1" position="0 2 0"></a-sky>
+    <!--sky box to test 360 cam rig dist-->
+    <a-sky src="#anim" radius="5000"></a-sky>
 
 
     <a-entity id="myspotlight"
